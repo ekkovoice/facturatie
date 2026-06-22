@@ -12,7 +12,7 @@
       "facturatie_dag": 22,
       "actief": true,
       "mollie_customer_id": "cst_GpkCRucZnD",
-      "mollie_mandate_id": "",
+      "mollie_mandate_id": "mdt_zDsHCzoG56",
       "posten": [
         {
           "omschrijving": "Maandabonnement AI Voice Agent - Founding Partner tarief (101-300 gesprekken/mnd)",
