@@ -169,6 +169,22 @@ def send_email(klant, factuurnummer, pdf_path, totaal):
     print(f"Email verstuurd naar {klant['email']}")
 
 
+def mollie_eerste_betaallink(klant, totaal):
+    resp = requests.post(
+        "https://api.mollie.com/v2/payments",
+        headers={"Authorization": f"Bearer {MOLLIE_API_KEY}"},
+        json={
+            "amount": {"currency": "EUR", "value": f"{totaal:.2f}"},
+            "customerId": klant["mollie_customer_id"],
+            "sequenceType": "first",
+            "description": "Eerste betaling + SEPA-machtiging ekkovoice maandabonnement",
+            "redirectUrl": "https://ekkovoice.nl",
+        },
+    )
+    resp.raise_for_status()
+    return resp.json()["_links"]["checkout"]["href"]
+
+
 def mollie_charge(klant, totaal, factuurnummer):
     customer_id = klant.get("mollie_customer_id")
     mandate_id = klant.get("mollie_mandate_id")
@@ -213,6 +229,14 @@ def run(force=False):
         print(f"Verwerken: {klant['naam']}")
 
         factuurnummer = next_factuurnummer()
+
+        # Genereer verse betaallink als er nog geen mandate is
+        heeft_mandate = bool(klant.get("mollie_customer_id") and klant.get("mollie_mandate_id"))
+        if not heeft_mandate and klant.get("mollie_customer_id"):
+            klant["eerste_betaallink"] = mollie_eerste_betaallink(klant, 240.79)
+        else:
+            klant.pop("eerste_betaallink", None)
+
         pdf_path, totaal = generate_pdf(klant, factuurnummer, today)
         print(f"PDF gegenereerd: {pdf_path.name}")
 
