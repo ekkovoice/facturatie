@@ -109,6 +109,7 @@ def generate_pdf(klant, factuurnummer, today=None):
         btw_totaal_fmt=fmt_eur(btw_totaal),
         totaal_fmt=fmt_eur(totaal),
         totaal=totaal,
+        betaallink=klant.get("eerste_betaallink", ""),
     )
 
     pdf_dir = BASE_DIR / "facturen"
@@ -126,15 +127,29 @@ def send_email(klant, factuurnummer, pdf_path, totaal):
     msg["Subject"] = f"Factuur {factuurnummer} - ekkovoice"
 
     aanhef = klant.get("aanhef", klant["naam"])
-    body = (
-        f"Beste {aanhef},\n\n"
-        f"Bijgaand ontvang je factuur {factuurnummer} voor het maandabonnement bij ekkovoice.\n\n"
-        f"Het bedrag van {fmt_eur(totaal)} euro wordt automatisch via SEPA-incasso afgeschreven.\n\n"
-        f"Met vriendelijke groet,\n"
-        f"Enes Dere\n"
-        f"ekkovoice\n"
-        f"enes@ekkovoice.nl | +31 6 365 97990"
-    )
+    betaallink = klant.get("eerste_betaallink", "")
+
+    if betaallink:
+        body = (
+            f"Beste {aanhef},\n\n"
+            f"Bijgaand ontvang je factuur {factuurnummer} voor het maandabonnement bij ekkovoice.\n\n"
+            f"Betaal via onderstaande iDEAL-link. Door te betalen geef je direct de machtiging voor automatische maandelijkse incasso, zodat je hier verder niets meer voor hoeft te doen.\n\n"
+            f"Betaallink: {betaallink}\n\n"
+            f"Met vriendelijke groet,\n"
+            f"Enes Dere\n"
+            f"ekkovoice\n"
+            f"enes@ekkovoice.nl | +31 6 365 97990"
+        )
+    else:
+        body = (
+            f"Beste {aanhef},\n\n"
+            f"Bijgaand ontvang je factuur {factuurnummer} voor het maandabonnement bij ekkovoice.\n\n"
+            f"Het bedrag van {fmt_eur(totaal)} euro wordt automatisch via SEPA-incasso afgeschreven.\n\n"
+            f"Met vriendelijke groet,\n"
+            f"Enes Dere\n"
+            f"ekkovoice\n"
+            f"enes@ekkovoice.nl | +31 6 365 97990"
+        )
 
     msg.attach(MIMEText(body, "plain", "utf-8"))
 

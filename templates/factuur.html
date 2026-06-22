@@ -101,7 +101,12 @@
 </table>
 
 <div class="payment">
+  {% if betaallink %}
+  Betaal dit bedrag van € {{ totaal_fmt }} via iDEAL via onderstaande link. Na betaling is de automatische maandelijkse incasso actief en hoeft u verder niets te doen.<br><br>
+  <strong>Betaallink:</strong> {{ betaallink }}<br><br>
+  {% else %}
   Het bedrag van € {{ totaal_fmt }} wordt automatisch via SEPA-incasso afgeschreven.<br>
+  {% endif %}
   Bij vragen: enes@ekkovoice.nl of +31 (0)6 365 97990.
 </div>
 

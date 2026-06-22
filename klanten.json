@@ -13,6 +13,7 @@
       "actief": true,
       "mollie_customer_id": "cst_GpkCRucZnD",
       "mollie_mandate_id": "",
+      "eerste_betaallink": "https://pay.ideal.nl/transactions/https%3A%2F%2Ftx.ideal.nl%2F2%2FA53ZUNLDQFMY5O3TGHUJNSJSWMA?sig=CGBCQEIIA32ONIXFOII6XF3OCJZZ2WW2A2Z7Q3FFLHTFXQFFYLKXNRLRZDTEAEID5XHVT5PSAJAB47VAMLC3H2FUSBYIOW36PBRXPLSZBBNFY6LT3BA",
       "posten": [
         {
           "omschrijving": "Maandabonnement AI Voice Agent - Founding Partner tarief (101-300 gesprekken/mnd)",
