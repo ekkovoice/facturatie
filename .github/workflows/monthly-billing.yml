@@ -1,0 +1,44 @@
+name: Maandelijkse facturatie
+
+on:
+  schedule:
+    - cron: '0 7 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  facturatie:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Systeemafhankelijkheden weasyprint
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y libpango1.0-0 libharfbuzz0b libpangoft2-1.0-0 libpangocairo-1.0-0 libgdk-pixbuf2.0-0
+
+      - name: Python packages installeren
+        run: pip install -r requirements.txt
+
+      - name: Facturatie uitvoeren
+        env:
+          MOLLIE_API_KEY: ${{ secrets.MOLLIE_API_KEY }}
+          SMTP_HOST: ${{ secrets.SMTP_HOST }}
+          SMTP_PORT: ${{ secrets.SMTP_PORT }}
+          SMTP_USER: ${{ secrets.SMTP_USER }}
+          SMTP_PASS: ${{ secrets.SMTP_PASS }}
+          MAIL_FROM: ${{ secrets.MAIL_FROM }}
+        run: python run_billing.py
+
+      - name: Factuur-teller terugzetten naar repo
+        uses: stefanzweifel/git-auto-commit-action@v5
+        with:
+          commit_message: "auto: factuur_teller bijgewerkt"
+          file_pattern: factuur_teller.json

@@ -1,0 +1,25 @@
+{
+  "klanten": [
+    {
+      "id": "drfinn",
+      "naam": "Dr. Finn B.V.",
+      "contactpersoon": "Marc van Elk",
+      "aanhef": "Marc",
+      "email": "mvanelk@drfinn.nl",
+      "adres": "Noorderbuurt 4",
+      "postcode": "1271 XK",
+      "stad": "Huizen",
+      "facturatie_dag": 22,
+      "actief": true,
+      "mollie_customer_id": "",
+      "mollie_mandate_id": "",
+      "posten": [
+        {
+          "omschrijving": "Maandabonnement AI Voice Agent - Founding Partner tarief (101-300 gesprekken/mnd)",
+          "bedrag_excl": 199.00,
+          "btw_pct": 21
+        }
+      ]
+    }
+  ]
+}
