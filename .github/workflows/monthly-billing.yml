@@ -2,8 +2,13 @@ name: Maandelijkse facturatie
 
 on:
   schedule:
-    - cron: '0 7 * * *'
+    - cron: '0 7 9 * *'
   workflow_dispatch:
+    inputs:
+      test_mode:
+        description: 'Testmodus: geen SEPA, mail naar test-adres, draait ongeacht de dag'
+        type: boolean
+        default: true
 
 permissions:
   contents: write
@@ -35,6 +40,9 @@ jobs:
           SMTP_USER: ${{ secrets.SMTP_USER }}
           SMTP_PASS: ${{ secrets.SMTP_PASS }}
           MAIL_FROM: ${{ secrets.MAIL_FROM }}
+          BILLING_DRY_RUN: ${{ github.event.inputs.test_mode == 'true' && '1' || '' }}
+          BILLING_TEST_EMAIL: ${{ github.event.inputs.test_mode == 'true' && 'enesdere02@gmail.com' || '' }}
+          BILLING_FORCE: ${{ github.event.inputs.test_mode == 'true' && '1' || '' }}
         run: python run_billing.py
 
       - name: Factuur-teller terugzetten naar repo

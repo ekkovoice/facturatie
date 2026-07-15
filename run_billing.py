@@ -22,6 +22,11 @@ SMTP_USER = os.environ["SMTP_USER"]
 SMTP_PASS = os.environ["SMTP_PASS"]
 MAIL_FROM = os.environ.get("MAIL_FROM", "info@ekkovoice.nl")
 
+# Testmodus-schakelaars (leeg = productie)
+DRY_RUN = os.environ.get("BILLING_DRY_RUN") == "1"        # slaat Mollie/SEPA volledig over
+TEST_EMAIL = os.environ.get("BILLING_TEST_EMAIL", "").strip()  # stuurt mail hierheen i.p.v. klant
+ENV_FORCE = os.environ.get("BILLING_FORCE") == "1"        # draait ongeacht de dag
+
 DUTCH_MONTHS = {
     1: "januari", 2: "februari", 3: "maart", 4: "april",
     5: "mei", 6: "juni", 7: "juli", 8: "augustus",
@@ -47,11 +52,12 @@ def save_json(path, data):
         json.dump(data, f, indent=2, ensure_ascii=False)
 
 
-def next_factuurnummer():
+def next_factuurnummer(persist=True):
     teller_path = BASE_DIR / "factuur_teller.json"
     teller = load_json(teller_path)
     teller["laatste_nummer"] += 1
-    save_json(teller_path, teller)
+    if persist:
+        save_json(teller_path, teller)
     today = date.today()
     return f"{today.year}{today.month:02d}{teller['laatste_nummer']:04d}"
 
@@ -121,10 +127,15 @@ def generate_pdf(klant, factuurnummer, today=None):
 
 
 def send_email(klant, factuurnummer, pdf_path, totaal):
+    recipient = TEST_EMAIL or klant["email"]
+    subject = f"Factuur {factuurnummer} - ekkovoice"
+    if DRY_RUN:
+        subject = f"[TEST] {subject}"
+
     msg = MIMEMultipart()
     msg["From"] = f"ekkovoice <{MAIL_FROM}>"
-    msg["To"] = klant["email"]
-    msg["Subject"] = f"Factuur {factuurnummer} - ekkovoice"
+    msg["To"] = recipient
+    msg["Subject"] = subject
 
     aanhef = klant.get("aanhef", klant["naam"])
     betaallink = klant.get("eerste_betaallink", "")
@@ -166,7 +177,7 @@ def send_email(klant, factuurnummer, pdf_path, totaal):
         server.login(SMTP_USER, SMTP_PASS)
         server.send_message(msg)
 
-    print(f"Email verstuurd naar {klant['email']}")
+    print(f"Email verstuurd naar {recipient}")
 
 
 def mollie_eerste_betaallink(klant, totaal):
@@ -186,6 +197,10 @@ def mollie_eerste_betaallink(klant, totaal):
 
 
 def mollie_charge(klant, totaal, factuurnummer):
+    if DRY_RUN:
+        print(f"DRY RUN: Mollie/SEPA-incasso overgeslagen voor {klant['naam']} (EUR {totaal:.2f})")
+        return
+
     customer_id = klant.get("mollie_customer_id")
     mandate_id = klant.get("mollie_mandate_id")
 
@@ -215,6 +230,10 @@ def mollie_charge(klant, totaal, factuurnummer):
 
 
 def run(force=False):
+    force = force or ENV_FORCE
+    if DRY_RUN:
+        print("=== TESTMODUS (DRY RUN): geen echte incasso, mail naar test-adres ===")
+
     klanten_data = load_json(BASE_DIR / "klanten.json")
     today = date.today()
 
@@ -228,11 +247,11 @@ def run(force=False):
 
         print(f"Verwerken: {klant['naam']}")
 
-        factuurnummer = next_factuurnummer()
+        factuurnummer = next_factuurnummer(persist=not DRY_RUN)
 
         # Genereer verse betaallink als er nog geen mandate is
         heeft_mandate = bool(klant.get("mollie_customer_id") and klant.get("mollie_mandate_id"))
-        if not heeft_mandate and klant.get("mollie_customer_id"):
+        if not heeft_mandate and klant.get("mollie_customer_id") and not DRY_RUN:
             klant["eerste_betaallink"] = mollie_eerste_betaallink(klant, 240.79)
         else:
             klant.pop("eerste_betaallink", None)
