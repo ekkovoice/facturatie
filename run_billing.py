@@ -8,6 +8,7 @@ import base64
 from datetime import date, timedelta
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
+from email.mime.image import MIMEImage
 from email.mime.application import MIMEApplication
 from pathlib import Path
 from jinja2 import Template
@@ -132,37 +133,68 @@ def send_email(klant, factuurnummer, pdf_path, totaal):
     if DRY_RUN:
         subject = f"[TEST] {subject}"
 
-    msg = MIMEMultipart()
-    msg["From"] = f"ekkovoice <{MAIL_FROM}>"
-    msg["To"] = recipient
-    msg["Subject"] = subject
-
     aanhef = klant.get("aanhef", klant["naam"])
     betaallink = klant.get("eerste_betaallink", "")
 
     if betaallink:
-        body = (
-            f"Beste {aanhef},\n\n"
-            f"Bijgaand ontvang je factuur {factuurnummer} voor het maandabonnement bij ekkovoice.\n\n"
-            f"Betaal via onderstaande iDEAL-link. Door te betalen geef je direct de machtiging voor automatische maandelijkse incasso, zodat je hier verder niets meer voor hoeft te doen.\n\n"
-            f"Betaallink: {betaallink}\n\n"
-            f"Met vriendelijke groet,\n"
-            f"Enes Dere\n"
-            f"ekkovoice\n"
-            f"enes@ekkovoice.nl | +31 6 365 97990"
+        kern_txt = (
+            "Betaal via onderstaande iDEAL-link. Door te betalen geef je direct de machtiging voor "
+            "automatische maandelijkse incasso, zodat je hier verder niets meer voor hoeft te doen.\n\n"
+            f"Betaallink: {betaallink}"
+        )
+        kern_html = (
+            "<p>Betaal via onderstaande iDEAL-link. Door te betalen geef je direct de machtiging voor "
+            "automatische maandelijkse incasso, zodat je hier verder niets meer voor hoeft te doen.</p>"
+            f'<p><a href="{betaallink}" style="background:#111;color:#fff;padding:11px 20px;'
+            'text-decoration:none;border-radius:6px;display:inline-block;font-weight:bold;">Betaal factuur</a></p>'
         )
     else:
-        body = (
-            f"Beste {aanhef},\n\n"
-            f"Bijgaand ontvang je factuur {factuurnummer} voor het maandabonnement bij ekkovoice.\n\n"
-            f"Het bedrag van {fmt_eur(totaal)} euro wordt automatisch via SEPA-incasso afgeschreven.\n\n"
-            f"Met vriendelijke groet,\n"
-            f"Enes Dere\n"
-            f"ekkovoice\n"
-            f"enes@ekkovoice.nl | +31 6 365 97990"
-        )
+        kern_txt = f"Het bedrag van {fmt_eur(totaal)} euro wordt automatisch via SEPA-incasso afgeschreven."
+        kern_html = f"<p>Het bedrag van {fmt_eur(totaal)} euro wordt automatisch via SEPA-incasso afgeschreven.</p>"
 
-    msg.attach(MIMEText(body, "plain", "utf-8"))
+    plain_body = (
+        f"Beste {aanhef},\n\n"
+        f"Bijgaand ontvang je factuur {factuurnummer} voor het maandabonnement bij ekkovoice.\n\n"
+        f"{kern_txt}\n\n"
+        f"Met vriendelijke groet,\n"
+        f"Enes Dere\n"
+        f"ekkovoice\n"
+        f"enes@ekkovoice.nl | +31 6 365 97990"
+    )
+
+    html_body = f"""\
+<div style="font-family:Arial,Helvetica,sans-serif;font-size:14px;line-height:1.5;color:#222;max-width:600px;">
+  <img src="cid:logo" alt="ekkovoice" style="width:170px;height:auto;margin-bottom:24px;">
+  <p>Beste {aanhef},</p>
+  <p>Bijgaand ontvang je factuur {factuurnummer} voor het maandabonnement bij ekkovoice.</p>
+  {kern_html}
+  <p style="margin-top:24px;">Met vriendelijke groet,<br>
+  Enes Dere<br>
+  ekkovoice<br>
+  <a href="mailto:enes@ekkovoice.nl" style="color:#222;">enes@ekkovoice.nl</a> | +31 6 365 97990</p>
+</div>"""
+
+    msg = MIMEMultipart("mixed")
+    msg["From"] = f"ekkovoice <{MAIL_FROM}>"
+    msg["To"] = recipient
+    msg["Subject"] = subject
+
+    # Tekst + HTML als alternatieven; logo inline in de HTML via cid:logo
+    alt = MIMEMultipart("alternative")
+    alt.attach(MIMEText(plain_body, "plain", "utf-8"))
+
+    related = MIMEMultipart("related")
+    related.attach(MIMEText(html_body, "html", "utf-8"))
+
+    logo_path = BASE_DIR / "assets" / "logo.png"
+    with open(logo_path, "rb") as f:
+        logo_img = MIMEImage(f.read(), _subtype="png")
+    logo_img.add_header("Content-ID", "<logo>")
+    logo_img.add_header("Content-Disposition", "inline", filename="logo.png")
+    related.attach(logo_img)
+
+    alt.attach(related)
+    msg.attach(alt)
 
     with open(pdf_path, "rb") as f:
         attachment = MIMEApplication(f.read(), _subtype="pdf")

@@ -45,8 +45,9 @@ jobs:
           BILLING_FORCE: ${{ github.event.inputs.test_mode == 'true' && '1' || '' }}
         run: python run_billing.py
 
-      - name: Factuur-teller terugzetten naar repo
+      - name: Facturen en teller opslaan in repo
+        if: github.event.inputs.test_mode != 'true'
         uses: stefanzweifel/git-auto-commit-action@v5
         with:
-          commit_message: "auto: factuur_teller bijgewerkt"
-          file_pattern: factuur_teller.json
+          commit_message: "auto: factuur verstuurd + teller bijgewerkt"
+          file_pattern: factuur_teller.json facturen/*.pdf
