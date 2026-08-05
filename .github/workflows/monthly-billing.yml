@@ -2,7 +2,7 @@ name: Maandelijkse facturatie
 
 on:
   schedule:
-    - cron: '0 7 9 * *'
+    - cron: '0 7 8,9 * *'
   workflow_dispatch:
     inputs:
       test_mode:
@@ -50,4 +50,4 @@ jobs:
         uses: stefanzweifel/git-auto-commit-action@v5
         with:
           commit_message: "auto: factuur verstuurd + teller bijgewerkt"
-          file_pattern: factuur_teller.json facturen/*.pdf
+          file_pattern: factuur_teller.json klanten.json facturen/*.pdf
