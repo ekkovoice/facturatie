@@ -76,7 +76,7 @@
       <td>1</td>
       <td>
         {{ post.omschrijving }}
-        <div class="periode">Periode: {{ periode }}</div>
+        <div class="periode">Periode: {{ post.periode or periode }}</div>
       </td>
       <td class="right">€ {{ post.bedrag_excl_fmt }}</td>
       <td class="right">€ {{ post.bedrag_incl_fmt }}<br><small>{{ post.btw_pct }}% btw</small></td>

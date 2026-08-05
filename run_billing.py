@@ -27,6 +27,7 @@ MAIL_FROM = os.environ.get("MAIL_FROM", "info@ekkovoice.nl")
 DRY_RUN = os.environ.get("BILLING_DRY_RUN") == "1"        # slaat Mollie/SEPA volledig over
 TEST_EMAIL = os.environ.get("BILLING_TEST_EMAIL", "").strip()  # stuurt mail hierheen i.p.v. klant
 ENV_FORCE = os.environ.get("BILLING_FORCE") == "1"        # draait ongeacht de dag
+ONLY = os.environ.get("BILLING_ONLY", "").strip()         # draai alleen deze klant-id
 
 DUTCH_MONTHS = {
     1: "januari", 2: "februari", 3: "maart", 4: "april",
@@ -71,6 +72,15 @@ def bereken_periode(facturatie_dag, today=None):
     else:
         eind = start.replace(month=today.month + 1) - timedelta(days=1)
     return f"{dutch_date(start)} t/m {dutch_date(eind)}"
+
+
+def klant_totaal_incl(klant):
+    """Factuurtotaal incl. btw, los van de PDF-generatie."""
+    totaal = 0.0
+    for post in klant["posten"]:
+        btw = round(post["bedrag_excl"] * post["btw_pct"] / 100, 2)
+        totaal += round(post["bedrag_excl"] + btw, 2)
+    return round(totaal, 2)
 
 
 def generate_pdf(klant, factuurnummer, today=None):
@@ -270,8 +280,11 @@ def run(force=False):
     today = date.today()
 
     verwerkt = 0
+    eenmalig_verbruikt = False
     for klant in klanten_data["klanten"]:
         if not klant.get("actief"):
+            continue
+        if ONLY and klant["id"] != ONLY:
             continue
         if not force and klant.get("facturatie_dag") != today.day:
             print(f"Geen facturatie vandaag voor {klant['naam']} (dag {klant['facturatie_dag']}).")
@@ -284,7 +297,7 @@ def run(force=False):
         # Genereer verse betaallink als er nog geen mandate is
         heeft_mandate = bool(klant.get("mollie_customer_id") and klant.get("mollie_mandate_id"))
         if not heeft_mandate and klant.get("mollie_customer_id") and not DRY_RUN:
-            klant["eerste_betaallink"] = mollie_eerste_betaallink(klant, 240.79)
+            klant["eerste_betaallink"] = mollie_eerste_betaallink(klant, klant_totaal_incl(klant))
         else:
             klant.pop("eerste_betaallink", None)
 
@@ -294,8 +307,17 @@ def run(force=False):
         send_email(klant, factuurnummer, pdf_path, totaal)
         mollie_charge(klant, totaal, factuurnummer)
 
+        # Eenmalige posten (inhaalmaand, setup fee) vervallen na een echte factuur
+        if not DRY_RUN and any(p.get("eenmalig") for p in klant["posten"]):
+            klant["posten"] = [p for p in klant["posten"] if not p.get("eenmalig")]
+            eenmalig_verbruikt = True
+            print(f"Eenmalige posten verwijderd voor {klant['naam']}.")
+
         verwerkt += 1
         print(f"Klaar: {klant['naam']} | {factuurnummer} | EUR {totaal:.2f}")
+
+    if eenmalig_verbruikt:
+        save_json(BASE_DIR / "klanten.json", klanten_data)
 
     if verwerkt == 0:
         print(f"Niets te doen op dag {today.day}.")

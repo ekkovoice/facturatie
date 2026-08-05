@@ -20,6 +20,34 @@
           "btw_pct": 21
         }
       ]
+    },
+    {
+      "id": "ricks",
+      "naam": "Ricks Café",
+      "contactpersoon": "Justin",
+      "aanhef": "Justin",
+      "email": "ricks-cafe@outlook.com",
+      "adres": "Oudezijds Voorburgwal 252H",
+      "postcode": "1012 GK",
+      "stad": "Amsterdam",
+      "facturatie_dag": 8,
+      "actief": true,
+      "posten": [
+        {
+          "omschrijving": "Hosting en onderhoud website Rick's Tavern",
+          "periode": "8 juli 2026 t/m 7 augustus 2026",
+          "bedrag_excl": 25.0,
+          "btw_pct": 21,
+          "eenmalig": true
+        },
+        {
+          "omschrijving": "Hosting en onderhoud website Rick's Tavern",
+          "bedrag_excl": 25.0,
+          "btw_pct": 21
+        }
+      ],
+      "mollie_customer_id": "cst_aD8g7xgY6Y",
+      "mollie_mandate_id": "mdt_XEQXery3XH"
     }
   ]
 }

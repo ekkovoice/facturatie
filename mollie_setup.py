@@ -1,18 +1,24 @@
 """
 Eenmalige Mollie-setup per klant.
 
-Stap 1 - klant aanmaken + betaallink genereren:
-  python mollie_setup.py drfinn
+Route A - klant betaalt eerst zelf via iDEAL (sterkste bewijs):
+  Stap 1, klant aanmaken + betaallink genereren:
+    python mollie_setup.py drfinn
+  Stuur de link naar de klant. Zodra de klant betaald heeft:
+  Stap 2, mandate opslaan:
+    python mollie_setup.py drfinn
 
-Stuur de link naar de klant. Zodra de klant via iDEAL betaald heeft:
-
-Stap 2 - mandate opslaan:
-  python mollie_setup.py drfinn
+Route B - klant heeft schriftelijk toestemming gegeven en je hebt de IBAN.
+Mandaat wordt direct aangemaakt, klant hoeft niets te doen:
+    python mollie_setup.py ricks --iban "NL15RABO0199968195" --tenaamstelling "J. Watcha"
+Bewaar het toestemmingsbericht (WhatsApp/mail). Bij een storno is dat je bewijs.
 """
 import os
 import sys
 import json
+import argparse
 import requests
+from datetime import date
 from pathlib import Path
 
 BASE_DIR = Path(__file__).parent
@@ -63,6 +69,28 @@ def create_first_payment(customer_id, klant):
     return resp.json()
 
 
+def create_manual_mandate(customer_id, klant, iban, tenaamstelling):
+    """Legt een SEPA-mandaat vast op basis van een IBAN plus verkregen toestemming."""
+    referentie = f"EKKO-{klant['id'].upper()}-{date.today():%Y%m%d}"
+    resp = requests.post(
+        f"https://api.mollie.com/v2/customers/{customer_id}/mandates",
+        headers=HEADERS,
+        json={
+            "method": "directdebit",
+            "consumerName": tenaamstelling,
+            "consumerAccount": iban.replace(" ", "").upper(),
+            "signatureDate": date.today().isoformat(),
+            "mandateReference": referentie,
+        },
+    )
+    if resp.status_code != 201:
+        print(f"Mollie FOUT {resp.status_code}: {resp.text}")
+        sys.exit(1)
+    mandate = resp.json()
+    print(f"Mandaat aangemaakt: {mandate['id']} | status {mandate['status']} | ref {referentie}")
+    return mandate["id"]
+
+
 def get_active_mandate(customer_id):
     resp = requests.get(
         f"https://api.mollie.com/v2/customers/{customer_id}/mandates",
@@ -75,12 +103,16 @@ def get_active_mandate(customer_id):
 
 
 def run():
-    if len(sys.argv) < 2:
-        print("Gebruik: python mollie_setup.py <klant_id>")
-        print("Voorbeeld: python mollie_setup.py drfinn")
-        sys.exit(1)
+    parser = argparse.ArgumentParser(description="Mollie-setup per klant.")
+    parser.add_argument("klant_id", help="id uit klanten.json, bijv. drfinn")
+    parser.add_argument("--iban", help="IBAN van de klant, voor een direct mandaat zonder iDEAL-link")
+    parser.add_argument("--tenaamstelling", help="naam op de bankrekening, verplicht bij --iban")
+    args = parser.parse_args()
 
-    klant_id = sys.argv[1]
+    if args.iban and not args.tenaamstelling:
+        parser.error("--iban vereist ook --tenaamstelling")
+
+    klant_id = args.klant_id
     data = load_klanten()
     klant = next((k for k in data["klanten"] if k["id"] == klant_id), None)
 
@@ -94,6 +126,9 @@ def run():
         customer_id = create_customer(klant)
         klant["mollie_customer_id"] = customer_id
         save_klanten(data)
+
+    if args.iban and not get_active_mandate(customer_id):
+        create_manual_mandate(customer_id, klant, args.iban, args.tenaamstelling)
 
     mandate_id = get_active_mandate(customer_id)
 
