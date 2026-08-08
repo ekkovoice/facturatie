@@ -35,13 +35,6 @@
       "posten": [
         {
           "omschrijving": "Hosting en onderhoud website Rick's Tavern",
-          "periode": "8 juli 2026 t/m 7 augustus 2026",
-          "bedrag_excl": 25.0,
-          "btw_pct": 21,
-          "eenmalig": true
-        },
-        {
-          "omschrijving": "Hosting en onderhoud website Rick's Tavern",
           "bedrag_excl": 25.0,
           "btw_pct": 21
         }
