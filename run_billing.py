@@ -22,6 +22,7 @@ SMTP_PORT = int(os.environ.get("SMTP_PORT", "465"))
 SMTP_USER = os.environ["SMTP_USER"]
 SMTP_PASS = os.environ["SMTP_PASS"]
 MAIL_FROM = os.environ.get("MAIL_FROM", "info@ekkovoice.nl")
+MAIL_BCC = os.environ.get("MAIL_BCC", "enes@ekkovoice.nl")  # kopie voor je eigen administratie
 
 # Testmodus-schakelaars (leeg = productie)
 DRY_RUN = os.environ.get("BILLING_DRY_RUN") == "1"        # slaat Mollie/SEPA volledig over
@@ -188,6 +189,9 @@ def send_email(klant, factuurnummer, pdf_path, totaal):
     msg["From"] = f"ekkovoice <{MAIL_FROM}>"
     msg["To"] = recipient
     msg["Subject"] = subject
+    # Bij een test gaat de mail al naar het testadres, dan geen dubbele kopie
+    if MAIL_BCC and not TEST_EMAIL:
+        msg["Bcc"] = MAIL_BCC
 
     # Tekst + HTML als alternatieven; logo inline in de HTML via cid:logo
     alt = MIMEMultipart("alternative")
