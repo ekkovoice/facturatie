@@ -22,7 +22,7 @@ SMTP_PORT = int(os.environ.get("SMTP_PORT", "465"))
 SMTP_USER = os.environ["SMTP_USER"]
 SMTP_PASS = os.environ["SMTP_PASS"]
 MAIL_FROM = os.environ.get("MAIL_FROM", "info@ekkovoice.nl")
-MAIL_BCC = os.environ.get("MAIL_BCC", "enes@ekkovoice.nl")  # kopie voor je eigen administratie
+MAIL_BCC = os.environ.get("MAIL_BCC", "").strip()  # leeg = geen kopie; facturen staan al in facturen/
 
 # Testmodus-schakelaars (leeg = productie)
 DRY_RUN = os.environ.get("BILLING_DRY_RUN") == "1"        # slaat Mollie/SEPA volledig over
