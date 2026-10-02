@@ -41,6 +41,31 @@
       ],
       "mollie_customer_id": "cst_aD8g7xgY6Y",
       "mollie_mandate_id": "mdt_XEQXery3XH"
+    },
+    {
+      "id": "vwdm",
+      "naam": "Vintage Watches de Meesters",
+      "contactpersoon": "Justin",
+      "aanhef": "Justin",
+      "email": "vintagewatchesdemeesters@hotmail.com",
+      "adres": "Oudezijds Voorburgwal 252 H",
+      "postcode": "1012 GK",
+      "stad": "Amsterdam",
+      "facturatie_dag": 8,
+      "actief": true,
+      "posten": [
+        {
+          "omschrijving": "Hosting en onderhoud webshop Vintage Watches de Meesters",
+          "bedrag_excl": 25.0,
+          "btw_pct": 21
+        },
+        {
+          "omschrijving": "Bundelkorting, geldt zolang ook de hosting van Rick's Tavern loopt",
+          "bedrag_excl": -5.0,
+          "btw_pct": 21
+        }
+      ],
+      "mollie_customer_id": "cst_RkkYTYyeqA"
     }
   ]
 }
