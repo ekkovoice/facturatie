@@ -72,14 +72,14 @@
       "naam": "WJ Merchandising",
       "contactpersoon": "Kelly",
       "aanhef": "Kelly",
-      "email": "",
+      "email": "webshop@f-side.nl",
       "adres": "van Beekstraat 51",
       "postcode": "1121 NG",
       "stad": "Landsmeer",
       "kvk": "73678953",
       "facturatie_dag": 8,
       "actief": false,
-      "_todo": "Aanzetten na: factuurmail Kelly invullen + mandaat (python mollie_setup.py fside --iban ... --tenaamstelling ...). Eerste automatische factuur 8 november 2026.",
+      "_todo": "Aanzetten na betaling factuur 2026100018: IBAN en tenaamstelling uit Qonto halen, akkoord Kelly vragen, dan python mollie_setup.py fside --iban ... --tenaamstelling ... en actief op true. Eerste automatische factuur 8 november 2026.",
       "posten": [
         {
           "omschrijving": "Maandabonnement nieuwsbrief en webshopbeheer Shopify F-SIDE",
