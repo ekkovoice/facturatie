@@ -66,6 +66,27 @@
         }
       ],
       "mollie_customer_id": "cst_RkkYTYyeqA"
+    },
+    {
+      "id": "fside",
+      "naam": "WJ Merchandising",
+      "contactpersoon": "Kelly",
+      "aanhef": "Kelly",
+      "email": "",
+      "adres": "van Beekstraat 51",
+      "postcode": "1121 NG",
+      "stad": "Landsmeer",
+      "kvk": "73678953",
+      "facturatie_dag": 8,
+      "actief": false,
+      "_todo": "Aanzetten na: factuurmail Kelly invullen + mandaat (python mollie_setup.py fside --iban ... --tenaamstelling ...). Eerste automatische factuur 8 november 2026.",
+      "posten": [
+        {
+          "omschrijving": "Maandabonnement nieuwsbrief en webshopbeheer Shopify F-SIDE",
+          "bedrag_excl": 295.0,
+          "btw_pct": 21
+        }
+      ]
     }
   ]
 }
